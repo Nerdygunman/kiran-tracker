@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>KIRAN S P | Tactical Command Tracker</title>
     
+    <!-- Apple Web App & Icon Settings -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kiran's Tracker">
+    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="icon" type="image/png" href="logo.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -63,12 +70,6 @@
             border-left-color: #ef4444 !important; 
         }
         
-        @keyframes slideDown {
-            from { transform: translateY(-100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .banner-enter { animation: slideDown 0.4s ease-out forwards; }
-        
         .glass-panel {
             background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(10px);
@@ -94,24 +95,17 @@
 </head>
 <body class="min-h-screen flex flex-col relative overflow-x-hidden selection:bg-army-light selection:text-white">
 
+    <!-- Custom Tactical Pop-up (Hidden by default) -->
+    <div id="tactical-popup" style="display: none;" class="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 border-2 border-red-700 text-white p-5 rounded-lg z-[9999] shadow-[0_4px_20px_rgba(220,38,38,0.8)] text-center w-[85%] max-w-[400px]">
+        <strong class="text-red-500 text-lg font-header tracking-wider"><i class="fa-solid fa-triangle-exclamation animate-pulse"></i> COMMAND ALERT</strong>
+        <span id="popup-message" class="block my-3 font-medium text-sm sm:text-base">Task missed!</span>
+        <button onclick="dismissPopup()" class="bg-army hover:bg-army-light text-white border-none py-2 px-6 rounded font-bold cursor-pointer uppercase tracking-wider text-sm transition-colors">Acknowledge</button>
+    </div>
+
     <!-- High Res Army Camo/Tactical Background -->
     <div class="fixed inset-0 z-[-2] bg-[url('https://images.unsplash.com/photo-1595503463773-4560ea5461c2?q=80&w=1920&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat bg-fixed"></div>
     <!-- Heavy dark slate overlay for high contrast readability -->
     <div class="fixed inset-0 z-[-1] bg-slate-900/90"></div>
-
-    <!-- Live Alert Banner (Triggered by Overdue Tasks) -->
-    <div id="alert-banner" class="hidden fixed top-0 left-0 w-full z-50 bg-red-700 text-white px-4 py-3 sm:py-4 shadow-[0_4px_20px_rgba(220,38,38,0.6)] border-b-4 border-red-900 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 banner-enter">
-        <div class="flex items-center gap-3 w-full sm:w-auto">
-            <i class="fa-solid fa-triangle-exclamation text-2xl sm:text-3xl animate-pulse text-black"></i>
-            <div>
-                <h3 class="font-header text-lg sm:text-xl tracking-wider font-bold text-black" id="alert-title">DISCIPLINE COMPROMISED</h3>
-                <p class="text-sm sm:text-base font-medium leading-snug" id="alert-message">Task Overdue. Acknowledge and execute immediately.</p>
-            </div>
-        </div>
-        <button onclick="dismissAlert()" class="w-full sm:w-auto bg-black hover:bg-slate-900 px-6 py-2 rounded text-sm font-bold border border-red-500 transition-colors uppercase tracking-wider">
-            Acknowledge
-        </button>
-    </div>
 
     <header class="glass-panel border-b-2 border-b-army sticky top-0 z-40">
         <!-- Indian Flag Top Border -->
@@ -123,9 +117,9 @@
         
         <div class="max-w-7xl mx-auto px-3 py-2 sm:px-6 lg:px-8 flex justify-between items-center gap-2">
             <div class="flex items-center gap-3 sm:gap-4">
-                <!-- Indian Army Emblem (Wikipedia Public Domain) -->
+                <!-- Offline-Ready Logo Reference -->
                 <div class="flex-shrink-0 bg-white/10 p-1 rounded-full border border-army-light">
-                    <img src="C:\Users\HP\Pictures\layer0 Frame.png" alt="Indian Army Logo" class="h-10 w-10 sm:h-12 sm:w-12 object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
+                    <img src="logo.png" alt="Indian Army Logo" class="h-10 w-10 sm:h-12 sm:w-12 object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
                 </div>
                 <div>
                     <h1 class="text-xl sm:text-3xl text-white tracking-widest leading-none font-bold">KIRAN S P</h1>
@@ -164,6 +158,15 @@
                 </div>
                 <div class="hidden lg:block p-4 max-h-[400px] overflow-y-auto text-sm space-y-4 custom-scrollbar" id="olq-container">
                     <!-- JS Injected OLQs -->
+                </div>
+            </div>
+
+            <!-- Tactical Data Backup -->
+            <div class="glass-panel p-4 rounded-lg text-center border-l-4 border-l-gray-500">
+                <h3 class="font-header text-sm text-gray-300 mb-3"><i class="fa-solid fa-database mr-1"></i> Tactical Data Backup</h3>
+                <div class="flex justify-center gap-3">
+                    <button onclick="exportData()" class="bg-army hover:bg-army-light text-white text-xs sm:text-sm font-bold py-2 px-3 rounded transition-colors"><i class="fa-solid fa-copy mr-1"></i> Backup</button>
+                    <button onclick="importData()" class="bg-red-900 hover:bg-red-800 text-white text-xs sm:text-sm font-bold py-2 px-3 rounded transition-colors"><i class="fa-solid fa-download mr-1"></i> Restore</button>
                 </div>
             </div>
             
@@ -276,17 +279,19 @@
         let tasks = [];
         const STORAGE_KEY = 'kiran_tactical_schedule';
         
+        // --- Bugle Sound Setup ---
+        const bugleAlert = new Audio("https://actions.google.com/sounds/v1/alarms/bugle_tune.ogg");
+        
         // --- DOM Elements ---
         const clockEl = document.getElementById('clock');
         const dateDisplayEl = document.getElementById('date-display');
         const olqContainer = document.getElementById('olq-container');
         const taskForm = document.getElementById('task-form');
         const taskList = document.getElementById('task-list');
-        const alertBanner = document.getElementById('alert-banner');
         
         let lastAlertedTask = null;
 
-        // --- STREAMING_CHUNK: Initialization & Utilities ---
+        // --- Initialization & Utilities ---
         function init() {
             setupOLQs();
             startClock();
@@ -334,12 +339,11 @@
 
         function rotateMotivation() {
             const el = document.getElementById('personal-motivation');
-            // Pick a random motivation for Kiran on load
             const phrase = kiranMotivations[Math.floor(Math.random() * kiranMotivations.length)];
             el.innerText = `"${phrase}"`;
         }
 
-        // --- STREAMING_CHUNK: Network & Data Handlers ---
+        // --- Network & Data Handlers ---
         function updateNetworkStatus() {
             const icon = document.getElementById('network-status-icon');
             const text = document.getElementById('network-status-text');
@@ -402,23 +406,46 @@
             `).join('');
         }
 
-        // --- STREAMING_CHUNK: Task Management & Rendering ---
+        // --- Tactical Backup/Restore Logic ---
+        function exportData() {
+            const data = JSON.stringify(localStorage);
+            navigator.clipboard.writeText(data).then(() => {
+                alert("COMMAND CONFIRMED: Data copied! Open Apple Notes and paste it now to save.");
+            }).catch(err => {
+                prompt("Copy this text manually and save to Apple Notes:", data);
+            });
+        }
+
+        function importData() {
+            const data = prompt("Paste your backed-up text string here to restore operations:");
+            if (data) {
+                try {
+                    const parsed = JSON.parse(data);
+                    for (let key in parsed) {
+                        localStorage.setItem(key, parsed[key]);
+                    }
+                    alert("DATA RESTORED. Refreshing interface...");
+                    location.reload();
+                } catch (e) {
+                    alert("ERROR: Invalid backup sequence.");
+                }
+            }
+        }
+
+        // --- Task Management & Rendering ---
         function loadTasks() {
             const saved = localStorage.getItem(STORAGE_KEY);
-            // Also check if it's a new day to reset completed status
             const lastDate = localStorage.getItem('kiran_last_date');
             const today = new Date().toDateString();
 
             if (saved) {
                 tasks = JSON.parse(saved);
                 if (lastDate !== today) {
-                    // New day! Reset checkboxes but keep schedule
                     tasks.forEach(t => t.completed = false);
                     localStorage.setItem('kiran_last_date', today);
                     saveTasks();
                 }
             } else {
-                // First time load
                 tasks = [...defaultSchedule];
                 localStorage.setItem('kiran_last_date', today);
                 saveTasks();
@@ -463,9 +490,8 @@
                 task.completed = !task.completed;
                 saveTasks();
                 renderTasks();
-                // Hide alert if they just checked off the alarming task
                 if (task.completed) {
-                    dismissAlert();
+                    dismissPopup();
                 }
             }
         }
@@ -476,10 +502,9 @@
             renderTasks();
         }
 
-        // --- STREAMING_CHUNK: Timeline Logic & Live Warnings ---
+        // --- Timeline Logic & Live Warnings ---
         function renderTasks() {
             taskList.innerHTML = '';
-            // Sort by time
             tasks.sort((a, b) => a.time.localeCompare(b.time));
             
             const currentTime = getCurrentTimeHHMM();
@@ -487,7 +512,6 @@
             tasks.forEach(task => {
                 const isOverdue = !task.completed && task.time < currentTime;
                 
-                // Base styles
                 let containerClass = "bg-slate-800/80 border-l-4 border-slate-600";
                 let titleClass = "text-white";
                 let badgeHTML = "";
@@ -507,7 +531,6 @@
                 el.className = `relative pl-10 sm:pl-12 transition-all duration-300`;
                 
                 el.innerHTML = `
-                    <!-- Custom Checkbox positioned over the tracking line -->
                     <label class="absolute left-[3px] sm:left-[7px] top-1/2 -translate-y-1/2 cursor-pointer z-10 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8">
                         <input type="checkbox" class="tactical-checkbox hidden" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')">
                         <div class="w-5 h-5 sm:w-6 sm:h-6 rounded border-2 border-gray-400 bg-slate-900 flex items-center justify-center transition-colors shadow-lg hover:border-white">
@@ -538,11 +561,9 @@
             const currentTime = getCurrentTimeHHMM();
             let hasOverdue = false;
             
-            // Find the most recent overdue task to alert on
             for (let task of tasks) {
                 if (!task.completed && task.time < currentTime) {
                     hasOverdue = true;
-                    // Only trigger heavy alert if we haven't already alerted for THIS specific task
                     if (lastAlertedTask !== task.id) {
                         triggerAlert(task.title);
                         lastAlertedTask = task.id;
@@ -551,25 +572,33 @@
                 }
             }
 
-            // If user checked off the overdue task, reset alert state
             if (!hasOverdue) {
                 lastAlertedTask = null;
-                dismissAlert();
+                dismissPopup();
             }
         }
 
         function triggerAlert(taskName) {
-            document.getElementById('alert-message').innerText = `Objective [${taskName}] is overdue. Execute immediately.`;
-            alertBanner.classList.remove('hidden');
+            document.getElementById('popup-message').innerText = `Objective [${taskName}] is overdue. Execute immediately.`;
+            document.getElementById('tactical-popup').style.display = 'block';
             
-            // Vibrate on mobile if supported
+            // Play bugle sound
+            bugleAlert.play().catch(error => {
+                console.log("Audio requires user interaction first.");
+            });
+            
             if (navigator.vibrate) {
                 navigator.vibrate([200, 100, 200, 100, 500]);
             }
+
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                dismissPopup();
+            }, 10000);
         }
 
-        function dismissAlert() {
-            alertBanner.classList.add('hidden');
+        function dismissPopup() {
+            document.getElementById('tactical-popup').style.display = 'none';
         }
 
         // Initialize application
