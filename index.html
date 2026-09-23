@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KIRAN S P | Tactical Command Tracker</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        header: ['Oswald', 'sans-serif'],
+                    },
+                    colors: {
+                        army: {
+                            light: '#5d6727',
+                            DEFAULT: '#4b5320', 
+                            dark: '#2e3314',
+                        },
+                        navy: {
+                            DEFAULT: '#172554',
+                            dark: '#0f172a',
+                        },
+                        india: {
+                            saffron: '#FF9933',
+                            white: '#FFFFFF',
+                            green: '#138808',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            color: #f8fafc;
+            overscroll-behavior-y: none; /* iOS friendly */
+        }
+        h1, h2, h3, .font-header { font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.05em; }
+        
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.8); }
+        ::-webkit-scrollbar-thumb { background: #4b5320; border-radius: 2px; }
+        @media (min-width: 768px) { ::-webkit-scrollbar { width: 6px; } }
+
+        /* Tactical UI Animations */
+        @keyframes pulse-severe {
+            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+        .overdue-task { 
+            animation: pulse-severe 2s infinite; 
+            background: rgba(220, 38, 38, 0.2) !important; 
+            border-left-color: #ef4444 !important; 
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .banner-enter { animation: slideDown 0.4s ease-out forwards; }
+        
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(75, 83, 32, 0.6);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Mobile Touch Targets */
+        button, input[type="time"], input[type="text"] {
+            min-height: 44px;
+        }
+
+        /* Checkbox styling */
+        .tactical-checkbox:checked + div {
+            background-color: #22c55e;
+            border-color: #22c55e;
+        }
+        .tactical-checkbox:checked + div i {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative overflow-x-hidden selection:bg-army-light selection:text-white">
+
+    <!-- High Res Army Camo/Tactical Background -->
+    <div class="fixed inset-0 z-[-2] bg-[url('https://images.unsplash.com/photo-1595503463773-4560ea5461c2?q=80&w=1920&auto=format&fit=crop')] bg-cover bg-center bg-no-repeat bg-fixed"></div>
+    <!-- Heavy dark slate overlay for high contrast readability -->
+    <div class="fixed inset-0 z-[-1] bg-slate-900/90"></div>
+
+    <!-- Live Alert Banner (Triggered by Overdue Tasks) -->
+    <div id="alert-banner" class="hidden fixed top-0 left-0 w-full z-50 bg-red-700 text-white px-4 py-3 sm:py-4 shadow-[0_4px_20px_rgba(220,38,38,0.6)] border-b-4 border-red-900 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 banner-enter">
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+            <i class="fa-solid fa-triangle-exclamation text-2xl sm:text-3xl animate-pulse text-black"></i>
+            <div>
+                <h3 class="font-header text-lg sm:text-xl tracking-wider font-bold text-black" id="alert-title">DISCIPLINE COMPROMISED</h3>
+                <p class="text-sm sm:text-base font-medium leading-snug" id="alert-message">Task Overdue. Acknowledge and execute immediately.</p>
+            </div>
+        </div>
+        <button onclick="dismissAlert()" class="w-full sm:w-auto bg-black hover:bg-slate-900 px-6 py-2 rounded text-sm font-bold border border-red-500 transition-colors uppercase tracking-wider">
+            Acknowledge
+        </button>
+    </div>
+
+    <header class="glass-panel border-b-2 border-b-army sticky top-0 z-40">
+        <!-- Indian Flag Top Border -->
+        <div class="flex h-1.5 w-full">
+            <div class="w-1/3 bg-india-saffron"></div>
+            <div class="w-1/3 bg-india-white"></div>
+            <div class="w-1/3 bg-india-green"></div>
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-3 py-2 sm:px-6 lg:px-8 flex justify-between items-center gap-2">
+            <div class="flex items-center gap-3 sm:gap-4">
+                <!-- Indian Army Emblem (Wikipedia Public Domain) -->
+                <div class="flex-shrink-0 bg-white/10 p-1 rounded-full border border-army-light">
+                    <img src="C:\Users\HP\Pictures\layer0 Frame.png" alt="Indian Army Logo" class="h-10 w-10 sm:h-12 sm:w-12 object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-3xl text-white tracking-widest leading-none font-bold">KIRAN S P</h1>
+                    <p class="text-[9px] sm:text-xs text-india-saffron tracking-[0.1em] sm:tracking-[0.2em] mt-1 font-semibold">TACTICAL COMMAND TRACKER</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="bg-black/60 border border-army-light px-3 sm:px-5 py-1 sm:py-1.5 rounded shadow-inner text-center">
+                    <div id="clock" class="font-mono text-base sm:text-2xl text-white font-bold tracking-wider">00:00</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+        
+        <div class="lg:col-span-3 space-y-4 sm:space-y-6 flex flex-col-reverse lg:flex-col">
+            
+            <!-- Network-Aware Daily Quote -->
+            <div class="glass-panel p-4 rounded-lg border-l-4 border-l-india-saffron relative overflow-hidden">
+                <div class="absolute top-2 right-2 flex items-center gap-1 text-[10px] font-mono bg-black/50 px-2 py-0.5 rounded">
+                    <span id="network-status-icon"><i class="fa-solid fa-wifi text-green-500"></i></span>
+                    <span id="network-status-text" class="text-green-500">ONLINE</span>
+                </div>
+                <h3 class="font-header text-sm text-india-saffron mb-2 mt-1"><i class="fa-solid fa-satellite-dish mr-1"></i> Command Briefing</h3>
+                <p id="daily-quote-text" class="text-sm italic text-gray-200 font-medium leading-relaxed">"Loading briefing..."</p>
+                <p id="daily-quote-author" class="text-xs text-gray-400 mt-2 text-right font-bold">— Standby</p>
+            </div>
+
+            <!-- 15 OLQs Checklist -->
+            <div class="glass-panel rounded-lg overflow-hidden flex-grow lg:flex-grow-0">
+                <div class="bg-navy px-4 py-3 border-b border-blue-900 cursor-pointer lg:cursor-default flex justify-between items-center" id="olq-toggle">
+                    <h2 class="text-sm sm:text-base text-white flex items-center gap-2 font-header tracking-wide"><i class="fa-solid fa-star text-india-saffron"></i> 15 OLQs Checklist</h2>
+                    <i class="fa-solid fa-chevron-down lg:hidden text-gray-400 transition-transform" id="olq-chevron"></i>
+                </div>
+                <div class="hidden lg:block p-4 max-h-[400px] overflow-y-auto text-sm space-y-4 custom-scrollbar" id="olq-container">
+                    <!-- JS Injected OLQs -->
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="lg:col-span-4 space-y-4 sm:space-y-6">
+            
+            <!-- Personal Motivation Banner -->
+            <div class="glass-panel rounded-lg overflow-hidden border border-army-light relative">
+                <div class="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-army-dark/80 to-transparent"></div>
+                <div class="p-4 sm:p-5 relative z-10">
+                    <h2 class="text-lg sm:text-xl text-white font-header mb-1">OFFICER CADET <span class="text-india-saffron">KIRAN S P</span></h2>
+                    <p id="personal-motivation" class="text-sm sm:text-base text-gray-300 italic">"The uniform awaits. Sweat in peace, bleed less in war."</p>
+                </div>
+            </div>
+
+            <!-- Add Task Form -->
+            <div class="glass-panel rounded-lg overflow-hidden">
+                <div class="bg-army px-4 py-3 border-b border-army-light">
+                    <h2 class="text-sm sm:text-base text-white flex items-center gap-2 font-header tracking-wide"><i class="fa-solid fa-plus text-white"></i> Add Mission Objective</h2>
+                </div>
+                <form id="task-form" class="p-4 space-y-3">
+                    <div>
+                        <input type="text" id="task-title" required placeholder="Objective Details (e.g. 5KM Run)" 
+                            class="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white focus:ring-1 focus:ring-army-light outline-none placeholder-gray-500 text-sm">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-400 mb-1 uppercase tracking-wider">Start Time</label>
+                            <input type="time" id="task-time" required 
+                                class="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded text-white focus:ring-1 focus:ring-army-light outline-none [color-scheme:dark] text-sm">
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" class="w-full bg-army hover:bg-army-light text-white font-header tracking-widest py-2 rounded shadow-lg transition-all text-sm border border-army-light">
+                                <i class="fa-solid fa-crosshairs mr-1"></i> ADD
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="lg:col-span-5 flex flex-col h-[650px] lg:h-[calc(100vh-8rem)]">
+            <div class="glass-panel rounded-lg flex-grow flex flex-col overflow-hidden relative border-t-4 border-t-army">
+                
+                <div class="bg-black/80 border-b border-slate-700 p-3 sm:p-4 flex justify-between items-center z-10">
+                    <div>
+                        <h2 class="text-base sm:text-lg text-white font-header tracking-wide flex items-center"><i class="fa-solid fa-list-check mr-2 text-army-light"></i> Daily Routine Protocol</h2>
+                        <p class="text-[10px] text-gray-400 font-mono mt-0.5" id="date-display">LOAD</p>
+                    </div>
+                    <button onclick="resetRoutine()" class="text-[10px] bg-slate-800 hover:bg-red-900/50 text-gray-300 px-2 py-1 rounded border border-slate-600 transition-colors uppercase tracking-wider">
+                        Reset Routine
+                    </button>
+                </div>
+
+                <!-- Timeline Container -->
+                <div class="flex-grow overflow-y-auto p-3 sm:p-4 relative" id="timeline-container">
+                    <!-- Tracking Line -->
+                    <div class="absolute left-[31px] sm:left-[35px] top-4 bottom-4 w-0.5 bg-slate-700 z-0"></div>
+                    
+                    <div id="task-list" class="space-y-2 relative z-10 pb-10">
+                        <!-- Tasks Injected Here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- Core Data ---
+        const olqData = [
+            { factor: "Factor I: Planning & Organisation", items: ["Effective Intelligence", "Reasoning Ability", "Organising Ability", "Power of Expression"] },
+            { factor: "Factor II: Social Adjustment", items: ["Social Adaptability", "Cooperation", "Sense of Responsibility"] },
+            { factor: "Factor III: Social Effectiveness", items: ["Initiative", "Self Confidence", "Speed of Decision", "Ability to Influence", "Liveliness"] },
+            { factor: "Factor IV: Dynamic", items: ["Determination", "Courage", "Stamina"] }
+        ];
+
+        const kiranMotivations = [
+            "The uniform awaits. Sweat in peace, bleed less in war.",
+            "Discipline is the bridge between your goals and accomplishment, Kiran.",
+            "Do not stop when you are tired. Stop when you are done.",
+            "You are training to lead. Act like it.",
+            "Pain is temporary. The glory of the Olive Green is forever."
+        ];
+
+        const defenseQuotes = [
+            { text: "Either I will come back after hoisting the tricolor, or I will come back wrapped in it.", author: "Capt. Vikram Batra, PVC" },
+            { text: "Some goals are so worthy, it's glorious even to fail.", author: "Capt. Manoj Kumar Pandey, PVC" },
+            { text: "We live by chance, we love by choice, we kill by profession.", author: "Officers Training Academy" },
+            { text: "If a man says he is not afraid of dying, he is either lying or is a Gurkha.", author: "Field Marshal Sam Manekshaw" },
+            { text: "Quartered in snow, silent to remain. When the bugle calls, they shall rise and march again.", author: "The Scroll of Honour, Siachen" }
+        ];
+
+        // Default Aspirant Schedule
+        const defaultSchedule = [
+            { id: "def_1", time: "05:00", title: "Wake Up, Hydrate & Freshen Up", completed: false },
+            { id: "def_2", time: "05:30", title: "Physical Training (Run/Workout)", completed: false },
+            { id: "def_3", time: "07:30", title: "Shower & Breakfast", completed: false },
+            { id: "def_4", time: "08:30", title: "College Classes & Academics", completed: false },
+            { id: "def_5", time: "14:00", title: "Lunch & Brief Rest", completed: false },
+            { id: "def_6", time: "17:00", title: "Evening Sports / Endurance", completed: false },
+            { id: "def_7", time: "18:30", title: "Current Affairs & News", completed: false },
+            { id: "def_8", time: "19:30", title: "SSB Prep (OIR, PPDT, TAT)", completed: false },
+            { id: "def_9", time: "20:30", title: "Dinner", completed: false },
+            { id: "def_10", time: "21:30", title: "Written Exam Study (NDA/CDS)", completed: false },
+            { id: "def_11", time: "22:30", title: "Lights Out. Sleep.", completed: false }
+        ];
+
+        let tasks = [];
+        const STORAGE_KEY = 'kiran_tactical_schedule';
+        
+        // --- DOM Elements ---
+        const clockEl = document.getElementById('clock');
+        const dateDisplayEl = document.getElementById('date-display');
+        const olqContainer = document.getElementById('olq-container');
+        const taskForm = document.getElementById('task-form');
+        const taskList = document.getElementById('task-list');
+        const alertBanner = document.getElementById('alert-banner');
+        
+        let lastAlertedTask = null;
+
+        // --- STREAMING_CHUNK: Initialization & Utilities ---
+        function init() {
+            setupOLQs();
+            startClock();
+            rotateMotivation();
+            handleNetworkQuote();
+            loadTasks();
+            
+            // Network Listeners
+            window.addEventListener('online', updateNetworkStatus);
+            window.addEventListener('offline', updateNetworkStatus);
+            updateNetworkStatus();
+
+            // Mobile Accordion
+            document.getElementById('olq-toggle').addEventListener('click', () => {
+                if (window.innerWidth < 1024) {
+                    olqContainer.classList.toggle('hidden');
+                    document.getElementById('olq-chevron').classList.toggle('rotate-180');
+                }
+            });
+
+            // Live checking every 10 seconds for overdues
+            setInterval(checkTimelineStatus, 10000);
+        }
+
+        function getTodayDateString() {
+            return new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        function getCurrentTimeHHMM() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            return `${h}:${m}`;
+        }
+
+        function startClock() {
+            dateDisplayEl.innerText = getTodayDateString();
+            const tick = () => {
+                const now = new Date();
+                clockEl.innerText = now.toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute:'2-digit' });
+            };
+            tick();
+            setInterval(tick, 1000);
+        }
+
+        function rotateMotivation() {
+            const el = document.getElementById('personal-motivation');
+            // Pick a random motivation for Kiran on load
+            const phrase = kiranMotivations[Math.floor(Math.random() * kiranMotivations.length)];
+            el.innerText = `"${phrase}"`;
+        }
+
+        // --- STREAMING_CHUNK: Network & Data Handlers ---
+        function updateNetworkStatus() {
+            const icon = document.getElementById('network-status-icon');
+            const text = document.getElementById('network-status-text');
+            if (navigator.onLine) {
+                icon.innerHTML = '<i class="fa-solid fa-wifi text-green-500"></i>';
+                text.innerText = "ONLINE";
+                text.className = "text-green-500";
+                handleNetworkQuote(); // Refresh quote if back online
+            } else {
+                icon.innerHTML = '<i class="fa-solid fa-wifi-slash text-red-500"></i>';
+                text.innerText = "OFFLINE";
+                text.className = "text-red-500";
+            }
+        }
+
+        function handleNetworkQuote() {
+            const today = new Date().toDateString();
+            const stored = JSON.parse(localStorage.getItem('kiran_quote_data')) || {};
+            const textEl = document.getElementById('daily-quote-text');
+            const authEl = document.getElementById('daily-quote-author');
+
+            // If we already fetched today, use it
+            if (stored.date === today && stored.quote) {
+                textEl.innerText = `"${stored.quote.text}"`;
+                authEl.innerText = `— ${stored.quote.author}`;
+                return;
+            }
+
+            // Need new quote. If online, rotate.
+            if (navigator.onLine) {
+                const newQuote = defenseQuotes[Math.floor(Math.random() * defenseQuotes.length)];
+                localStorage.setItem('kiran_quote_data', JSON.stringify({ date: today, quote: newQuote }));
+                textEl.innerText = `"${newQuote.text}"`;
+                authEl.innerText = `— ${newQuote.author}`;
+            } else {
+                // Offline fallback
+                if (stored.quote) {
+                    textEl.innerText = `"${stored.quote.text}"`;
+                    authEl.innerText = `— ${stored.quote.author}`;
+                } else {
+                    textEl.innerText = `"${defenseQuotes[0].text}"`;
+                    authEl.innerText = `— ${defenseQuotes[0].author}`;
+                }
+            }
+        }
+
+        function setupOLQs() {
+            olqContainer.innerHTML = olqData.map(group => `
+                <div class="mb-4 bg-slate-800/50 p-3 rounded border border-slate-700">
+                    <h4 class="font-header text-india-saffron text-sm border-b border-slate-700 pb-1 mb-2">${group.factor}</h4>
+                    <ul class="space-y-1.5 pl-1">
+                        ${group.items.map(item => `
+                            <li class="flex items-center gap-2 text-gray-300 text-xs sm:text-sm font-medium">
+                                <i class="fa-solid fa-check text-army-light text-[10px]"></i>
+                                ${item}
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `).join('');
+        }
+
+        // --- STREAMING_CHUNK: Task Management & Rendering ---
+        function loadTasks() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            // Also check if it's a new day to reset completed status
+            const lastDate = localStorage.getItem('kiran_last_date');
+            const today = new Date().toDateString();
+
+            if (saved) {
+                tasks = JSON.parse(saved);
+                if (lastDate !== today) {
+                    // New day! Reset checkboxes but keep schedule
+                    tasks.forEach(t => t.completed = false);
+                    localStorage.setItem('kiran_last_date', today);
+                    saveTasks();
+                }
+            } else {
+                // First time load
+                tasks = [...defaultSchedule];
+                localStorage.setItem('kiran_last_date', today);
+                saveTasks();
+            }
+            renderTasks();
+        }
+
+        function saveTasks() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+        }
+
+        function resetRoutine() {
+            if(confirm("Are you sure you want to reset to the default aspirant routine? Custom tasks will be lost.")) {
+                tasks = [...defaultSchedule];
+                saveTasks();
+                renderTasks();
+            }
+        }
+
+        taskForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('task-title').value;
+            const time = document.getElementById('task-time').value;
+
+            tasks.push({
+                id: 't_' + Date.now(),
+                time: time,
+                title: title,
+                completed: false
+            });
+
+            saveTasks();
+            renderTasks();
+            
+            document.getElementById('task-title').value = '';
+            document.getElementById('task-time').value = '';
+        });
+
+        function toggleTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                saveTasks();
+                renderTasks();
+                // Hide alert if they just checked off the alarming task
+                if (task.completed) {
+                    dismissAlert();
+                }
+            }
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            saveTasks();
+            renderTasks();
+        }
+
+        // --- STREAMING_CHUNK: Timeline Logic & Live Warnings ---
+        function renderTasks() {
+            taskList.innerHTML = '';
+            // Sort by time
+            tasks.sort((a, b) => a.time.localeCompare(b.time));
+            
+            const currentTime = getCurrentTimeHHMM();
+
+            tasks.forEach(task => {
+                const isOverdue = !task.completed && task.time < currentTime;
+                
+                // Base styles
+                let containerClass = "bg-slate-800/80 border-l-4 border-slate-600";
+                let titleClass = "text-white";
+                let badgeHTML = "";
+
+                if (task.completed) {
+                    containerClass = "bg-green-900/20 border-l-4 border-green-600 opacity-60";
+                    titleClass = "line-through text-gray-500";
+                } else if (isOverdue) {
+                    containerClass = "overdue-task";
+                    badgeHTML = `<span class="bg-red-600 text-white text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider animate-pulse ml-2">Overdue</span>`;
+                } else if (task.time === currentTime) {
+                    containerClass = "bg-army border-l-4 border-army-light shadow-[0_0_10px_rgba(75,83,32,0.5)]";
+                    badgeHTML = `<span class="bg-india-saffron text-black text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider animate-pulse ml-2">NOW</span>`;
+                }
+
+                const el = document.createElement('div');
+                el.className = `relative pl-10 sm:pl-12 transition-all duration-300`;
+                
+                el.innerHTML = `
+                    <!-- Custom Checkbox positioned over the tracking line -->
+                    <label class="absolute left-[3px] sm:left-[7px] top-1/2 -translate-y-1/2 cursor-pointer z-10 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8">
+                        <input type="checkbox" class="tactical-checkbox hidden" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')">
+                        <div class="w-5 h-5 sm:w-6 sm:h-6 rounded border-2 border-gray-400 bg-slate-900 flex items-center justify-center transition-colors shadow-lg hover:border-white">
+                            <i class="fa-solid fa-check text-white text-[10px] sm:text-xs opacity-0 transition-opacity"></i>
+                        </div>
+                    </label>
+                    
+                    <div class="rounded p-2.5 sm:p-3 flex items-center justify-between gap-3 ${containerClass}">
+                        <div class="flex-grow min-w-0">
+                            <div class="flex items-center mb-1">
+                                <span class="text-xs font-mono font-bold text-india-saffron bg-black/50 px-1.5 py-0.5 rounded border border-slate-700/50">${task.time}</span>
+                                ${badgeHTML}
+                            </div>
+                            <h3 class="${titleClass} font-semibold text-sm sm:text-base leading-snug break-words">${task.title}</h3>
+                        </div>
+                        <button onclick="deleteTask('${task.id}')" class="text-slate-500 hover:text-red-500 transition-colors p-2 rounded shrink-0">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
+                `;
+                taskList.appendChild(el);
+            });
+
+            checkTimelineStatus();
+        }
+
+        function checkTimelineStatus() {
+            const currentTime = getCurrentTimeHHMM();
+            let hasOverdue = false;
+            
+            // Find the most recent overdue task to alert on
+            for (let task of tasks) {
+                if (!task.completed && task.time < currentTime) {
+                    hasOverdue = true;
+                    // Only trigger heavy alert if we haven't already alerted for THIS specific task
+                    if (lastAlertedTask !== task.id) {
+                        triggerAlert(task.title);
+                        lastAlertedTask = task.id;
+                    }
+                    break;
+                }
+            }
+
+            // If user checked off the overdue task, reset alert state
+            if (!hasOverdue) {
+                lastAlertedTask = null;
+                dismissAlert();
+            }
+        }
+
+        function triggerAlert(taskName) {
+            document.getElementById('alert-message').innerText = `Objective [${taskName}] is overdue. Execute immediately.`;
+            alertBanner.classList.remove('hidden');
+            
+            // Vibrate on mobile if supported
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200, 100, 500]);
+            }
+        }
+
+        function dismissAlert() {
+            alertBanner.classList.add('hidden');
+        }
+
+        // Initialize application
+        window.onload = init;
+    </script>
+</body>
+</html>
